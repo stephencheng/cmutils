@@ -54,10 +54,21 @@ detect_version() {
 
   info "Detecting latest version..."
 
+  # Look for versioned releases (cmenvrc-v0.1.0) first
   VERSION=$(curl -sSf "https://api.github.com/repos/${REPO}/releases" 2>/dev/null \
     | grep -o '"tag_name": *"cmenvrc-v[^"]*"' \
     | head -1 \
     | sed 's/.*"cmenvrc-\(v[^"]*\)".*/\1/' || true)
+
+  # Fall back to "latest" build
+  if [[ -z "$VERSION" ]]; then
+    local has_latest
+    has_latest=$(curl -sSf "https://api.github.com/repos/${REPO}/releases/tags/cmenvrc-latest" 2>/dev/null \
+      | grep -o '"tag_name": *"cmenvrc-latest"' || true)
+    if [[ -n "$has_latest" ]]; then
+      VERSION="latest"
+    fi
+  fi
 
   if [[ -z "$VERSION" ]]; then
     error "Could not detect latest version. Set VERSION=v0.1.0 manually."
